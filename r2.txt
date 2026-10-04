@@ -1,0 +1,358 @@
+
+		# Load package
+library(dplyr)
+
+# Set working directory
+setwd("C:/your/path")
+
+# Read sample.txt
+data <- read.table("sample.txt",
+                   header = TRUE,
+                   sep = "\t",
+                   stringsAsFactors = FALSE)
+
+# View the data
+head(data)
+colnames(data)
+
+# Select differentially expressed genes
+DEGs <- data %>%
+  filter(adj.P.Val <= 0.05,
+         logFC <= -2 | logFC >= 2)
+
+# View DEGs
+DEGs
+
+# Number of DEGs
+nrow(DEGs)
+
+
+ # Install packages if required
+BiocManager::install(c("clusterProfiler", "org.Hs.eg.db"))
+
+# Load packages
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(ggplot2)
+library(dplyr)
+
+# Extract gene IDs from DEG list
+gene <- DEGs$gene
+
+# GO enrichment
+ego <- enrichGO(
+  gene = gene,
+  OrgDb = org.Hs.eg.db,
+  ont = "BP",
+  pAdjustMethod = "BH",
+  pvalueCutoff = 0.05,
+  qvalueCutoff = 0.05,
+  readable = TRUE
+)
+
+# View enrichment results
+head(ego)
+
+# Convert to data frame
+ego_df <- as.data.frame(ego)
+
+# Top 5 pathways/terms
+top5 <- ego_df %>%
+  arrange(p.adjust) %>%
+  head(5)
+
+# Display top 5
+top5
+
+# Bar plot
+p <- barplot(
+  ego,
+  showCategory = 5,
+  title = "Top 5 Enriched Pathways"
+)
+
+# Display plot
+print(p)
+
+# Save plot
+ggsave(
+  "top5_pathways.png",
+  plot = p,
+  width = 8,
+  height = 6,
+  dpi = 300
+)
+
+		library(clusterProfiler)
+library(org.Hs.eg.db)
+
+ego <- enrichGO(
+  gene = gene,
+  OrgDb = org.Hs.eg.db,
+  keyType = "ENTREZID",
+  ont = "BP",
+  pAdjustMethod = "BH",
+  pvalueCutoff = 0.05,
+  qvalueCutoff = 0.05,
+  readable = TRUE
+)
+head(ego)
+
+##GIT 
+ # Install Git
+sudo apt update
+sudo apt install git -y
+
+# Check Git
+git --version
+
+# Configure Git
+git config --global user.name "Chinmayith"
+git config --global user.email "YOUR_EMAIL@example.com"
+
+# Check configuration
+git config --global --list
+
+# Go to Downloads
+cd ~/Downloads
+
+# Clone your fork
+git clone https://github.com/Chinmayith/exam.git
+
+# Enter repository
+cd exam
+
+# Check files
+ls
+
+# See existing content
+cat student_name.txt
+
+# Add your full name
+echo "Chinmayi M S" >> student_name.txt
+
+# Verify
+cat student_name.txt
+
+# Check changes
+git status
+
+# Stage
+git add student_name.txt
+
+# Commit
+git commit -m "Add student name"
+
+# Check branch
+git branch
+
+# Push
+git push origin main
+
+
+###disease enrichGO
+# Set working directory
+setwd("C:/your/path")
+
+# Load packages
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(dplyr)
+
+# Read gene list
+gene_data <- read.table(
+    "genelist.txt",
+    header = TRUE,
+    sep = "\t",
+    stringsAsFactors = FALSE
+)
+
+# Check data
+head(gene_data)
+colnames(gene_data)
+
+# Convert gene symbols to Entrez IDs
+gene_entrez <- bitr(
+    gene_data$SYMBOL,
+    fromType = "SYMBOL",
+    toType = "ENTREZID",
+    OrgDb = org.Hs.eg.db
+)
+
+# Disease enrichment
+edo <- enrichDO(
+    gene = gene_entrez$ENTREZID,
+    pvalueCutoff = 0.05,
+    pAdjustMethod = "BH",
+    readable = TRUE
+)
+
+# View results
+head(edo)
+
+# Convert to data frame
+disease_results <- as.data.frame(edo)
+
+# Find most significantly enriched disease
+disease_results %>%
+    arrange(p.adjust) %>%
+    head(1)
+
+# Bar plot
+barplot(
+    edo,
+    showCategory = 10,
+    title = "Disease Enrichment"
+)
+
+# Save bar plot
+png(
+    "Disease_enrichment_barplot.png",
+    width = 1000,
+    height = 800
+)
+
+barplot(
+    edo,
+    showCategory = 10,
+    title = "Disease Enrichment"
+)
+
+dev.off()
+
+
+##microarray 
+# ================================
+# SESSIONAL Q3: MICROARRAY
+# TOP 50 DEGs + CLUSTERING
+# ================================
+
+# 1. Load package
+library(limma)
+
+# 2. Read target file
+targets <- readTargets("Targets.txt")
+
+# 3. Read microarray data
+RG <- read.maimages(
+  targets$FileName,
+  source = "agilent"
+)
+
+# 4. Within-array normalization
+MA <- normalizeWithinArrays(
+  RG,
+  method = "loess",
+  bc.method = "normexp",
+  offset = 50
+)
+
+# 5. Between-array normalization
+MA.q <- normalizeBetweenArrays(
+  MA,
+  method = "quantile"
+)
+
+# 6. Design matrix
+design <- modelMatrix(
+  targets,
+  ref = "normal"
+)
+
+# 7. Linear model
+fit <- lmFit(
+  MA.q,
+  design
+)
+
+# 8. Empirical Bayes
+eb <- eBayes(fit)
+
+# 9. Differential expression table
+tt <- topTable(
+  eb,
+  n = nrow(MA.q),
+  adjust.method = "BH"
+)
+
+# 10. Select top 50 DEGs
+top50 <- head(tt, 50)
+
+# View top 50
+top50
+
+# 11. Extract expression values of top 50
+top50_expr <- MA.q[rownames(top50), ]
+
+# Check dimensions
+dim(top50_expr)
+
+# =================================
+# A. HIERARCHICAL CLUSTERING
+# =================================
+
+heatmap(
+  as.matrix(top50_expr),
+  scale = "row",
+  main = "Hierarchical Clustering of Top 50 DEGs"
+)
+
+# Save hierarchical clustering
+png(
+  "Top50_Hierarchical_Clustering.png",
+  width = 1000,
+  height = 800
+)
+
+heatmap(
+  as.matrix(top50_expr),
+  scale = "row",
+  main = "Hierarchical Clustering of Top 50 DEGs"
+)
+
+dev.off()
+
+# =================================
+# B. K-MEANS CLUSTERING
+# =================================
+
+# Scale expression values
+scaled_data <- scale(top50_expr)
+
+# K-means
+set.seed(123)
+
+km <- kmeans(
+  scaled_data,
+  centers = 3
+)
+
+# View cluster assignment
+km$cluster
+
+# Order genes according to K-means cluster
+km_ordered <- top50_expr[
+  order(km$cluster),
+]
+
+# Plot K-means clusters
+heatmap(
+  as.matrix(km_ordered),
+  scale = "row",
+  main = "K-means Clustering of Top 50 DEGs"
+)
+
+# Save K-means clustering
+png(
+  "Top50_Kmeans_Clustering.png",
+  width = 1000,
+  height = 800
+)
+
+heatmap(
+  as.matrix(km_ordered),
+  scale = "row",
+  main = "K-means Clustering of Top 50 DEGs"
+)
+
+dev.off()

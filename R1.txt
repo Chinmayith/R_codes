@@ -1,0 +1,302 @@
+getwd()
+setwd("path/to/that/experiment")
+getwd()
+list.files()
+
+#experiment 2
+install.packages("dplyr")
+install.packages("tidyr")
+install.packages("ggplot2")
+install.packages("readr")
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(readr)
+
+#expirement 3
+BiocManager::install(c("clusterProfiler", "org.Hs.eg.db"))
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(ggplot2)
+library(dplyr)
+
+BiocManager::install("ReactomePA")
+library(ReactomePA)
+
+#experiment 4
+install.packages("BiocManager")
+BiocManager::install("limma")
+library(limma)
+
+
+#expirement 2 
+getwd()
+
+setwd("C:/Users/STUDENT/Documents/R_practice/dplyr")
+
+getwd()
+
+install.packages("dplyr")
+install.packages("tidyr")
+install.packages("ggplot2")
+install.packages("readr")
+
+library("dplyr")
+library("tidyr")
+library("ggplot2")
+library("readr")
+
+download.file(
+  "https://raw.githubusercontent.com/datacarpentry/genomics-r-intro/main/episodes/data/combined_tidy_vcf.csv",
+  destfile = "variants.csv"
+)
+
+variants <- read_csv("variants.csv")
+
+glimpse(variants)
+
+select(variants, sample_id, REF, ALT, DP)
+
+
+high_confidence <- variants %>%
+  filter(!INDEL, QUAL >= 200, DP >= 10)
+
+summary_table <- high_confidence %>%
+  group_by(sample_id) %>%
+  summarize(
+    Number_of_variants = n(),
+    Mean_QUAL = mean(QUAL, na.rm = TRUE),
+    Mean_DP = mean(DP, na.rm = TRUE)
+  ) %>%
+  arrange(desc(Number_of_variants))
+
+summary_table
+write.csv(summary_table, "summary_table.csv", row.names = FALSE)
+variants %>%
+  mutate(QUAL_normalized = QUAL / 100)
+   
+ #experiment 3
+ # Working directory
+getwd()
+setwd("C:/Users/STUDENT/Documents/R_practice/clusterProfiler")
+getwd()
+
+# Load packages
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(ggplot2)
+library(dplyr)
+library(ReactomePA)
+
+# Load example gene data
+data(geneList, package = "DOSE")
+
+# Inspect geneList
+head(geneList)
+
+# Create gene list
+gene <- names(geneList)[abs(geneList) > 2]
+
+# Inspect selected genes
+head(gene)
+
+# GO classification
+ggo <- groupGO(
+  gene = gene,
+  OrgDb = org.Hs.eg.db,
+  ont = "CC",
+  level = 3,
+  readable = TRUE
+)
+
+# View result
+head(ggo)
+
+# Plot
+barplot(
+  ggo,
+  showCategory = 10,
+  title = "GO Classification (Cellular Component)",
+  color = "p.adjust"
+)
+ego <- enrichGO(
+  gene = gene,
+  universe = names(geneList),
+  OrgDb = org.Hs.eg.db,
+  ont = "CC",
+  pAdjustMethod = "BH",
+  pvalueCutoff = 0.01,
+  qvalueCutoff = 0.05,
+  readable = TRUE
+)
+ego3 <- gseGO(
+  geneList = geneList,
+  OrgDb = org.Hs.eg.db,
+  ont = "CC",
+  minGSSize = 100,
+  maxGSSize = 500,
+  pvalueCutoff = 0.05,
+  verbose = FALSE
+)
+barplot(
+  ego3,
+  showCategory = 10,
+  title = "GSEA - Cellular Component"
+)
+data(geneList, package = "DOSE")
+
+gene <- names(geneList)[abs(geneList) > 2]
+
+ego <- enrichGO(
+  gene = gene,
+  universe = names(geneList),
+  OrgDb = org.Hs.eg.db,
+  ont = "CC",
+  pAdjustMethod = "BH",
+  pvalueCutoff = 0.01,
+  qvalueCutoff = 0.05,
+  readable = TRUE
+)
+
+head(ego)
+
+barplot(ego, showCategory = 10)
+
+
+reactome_ego <- enrichPathway(
+  gene = gene,
+  universe = names(geneList),
+  organism = "human",
+  pAdjustMethod = "BH",
+  pvalueCutoff = 0.05,
+  readable = TRUE
+)
+reactome_top <- reactome_df %>%
+  slice_max(
+    order_by = Count,
+    n = 10,
+    with_ties = FALSE
+  )
+barplot(
+  reactome_top,
+  showCategory = 10,
+  title = "Top Reactome Pathways"
+)
+# ==============================
+# SAVE ALL EXPERIMENT 3 PLOTS
+# ==============================
+
+# 1. GO Classification - Cellular Component
+barplot(ggo,
+        showCategory = 10,
+        title = "GO Classification (Cellular Component)",
+        color = "p.adjust")
+
+ggsave("GO_classification_CC.png",
+       width = 8, height = 6, dpi = 300)
+
+
+# 2. GO Enrichment - ORA
+barplot(ego,
+        showCategory = 10,
+        title = "GO Enrichment")
+
+ggsave("GO_enrichment_ORA.png",
+       width = 8, height = 6, dpi = 300)
+
+
+# 3. GSEA - Cellular Component
+barplot(ego3,
+        showCategory = 10,
+        title = "GSEA - Cellular Component")
+
+ggsave("GSEA_CC.png",
+       width = 8, height = 6, dpi = 300)
+
+
+# 4. GO Classification - BP, CC, MF
+# Run the faceted GO classification plot from the record first,
+# then save it using:
+
+ggsave("GO_classification_BP_CC_MF.png",
+       width = 10, height = 8, dpi = 300)
+
+
+# 5. GSEA - Dotplot
+dotplot(gsea_result,
+        showCategory = 10)
+
+ggsave("GSEA_dotplot.png",
+       width = 8, height = 6, dpi = 300)
+
+
+# 6. GSEA - Ridgeplot
+ridgeplot(gsea_result,
+          showCategory = 10)
+
+ggsave("GSEA_ridgeplot.png",
+       width = 8, height = 6, dpi = 300)
+
+
+# 7. Reactome - Top 10 Pathways
+barplot(reactome_top,
+        showCategory = 10,
+        title = "Top Reactome Pathways")
+
+ggsave("Reactome_top_pathways.png",
+       width = 8, height = 6, dpi = 300)
+
+
+# Check where all files were saved
+getwd()
+
+#expirement 4 
+library(limma)
+
+targets <- readTargets("Targets.txt")
+
+RG <- read.maimages(
+    targets$FileName,
+    source = "agilent"
+)
+
+MA <- normalizeWithinArrays(
+    RG,
+    method = "loess",
+    bc.method = "normexp",
+    offset = 50
+)
+
+dim(RG)
+summary(RG$R)
+
+plotMD(RG, column = 2)
+plotMA3by2(MA)
+
+MA.q <- normalizeBetweenArrays(
+    MA,
+    method = "quantile"
+)
+
+plotDensities(RG)
+plotDensities(MA)
+
+design <- modelMatrix(
+    targets,
+    ref = "normal"
+)
+
+fit <- lmFit(MA.q, design)
+
+eb <- eBayes(fit)
+
+tt <- topTable(
+    eb,
+    n = nrow(MA.q),
+    adjust.method = "BH"
+)
+
+top50 <- head(tt, 50)
+
+top50
